@@ -27,6 +27,7 @@
  */
 
 #include "kafkacat.h"
+#include "base64.h"
 
 #include <yajl/yajl_gen.h>
 
@@ -109,9 +110,14 @@ void fmt_msg_output_json (FILE *fp, const rd_kafka_message_t *rkmessage) {
                 yajl_gen_null(g);
 
         JS_STR(g, "payload");
-        if (rkmessage->payload)
-                yajl_gen_string(g, (const unsigned char *)rkmessage->payload,
-                                rkmessage->len);
+        if (rkmessage->payload) {
+                l = Base64encode_len(rkmessage->len);
+                b64 = malloc(l * sizeof(unsigned char));
+                l = Base64encode(b64, (const unsigned char *)rkmessage->payload, rkmessage->len);
+
+                yajl_gen_string(g, b64, l);
+                free(b64);
+        }
         else
                 yajl_gen_null(g);
 
@@ -135,8 +141,9 @@ void fmt_msg_output_json (FILE *fp, const rd_kafka_message_t *rkmessage) {
 void metadata_print_json (const struct rd_kafka_metadata *metadata,
                           int32_t controllerid) {
         yajl_gen g;
-        int i, j, k;
+        int i, j, k, l;
         const unsigned char *buf;
+        const unsigned char *b64;
         size_t len;
 
         g = yajl_gen_alloc(NULL);

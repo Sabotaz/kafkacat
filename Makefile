@@ -3,7 +3,7 @@ include Makefile.config
 BIN=	kafkacat
 
 SRCS_y=	kafkacat.c format.c tools.c
-SRCS_$(ENABLE_JSON) += json.c
+SRCS_$(ENABLE_JSON) += json.c base64.c
 OBJS=	$(SRCS_y:.c=.o)
 
 .PHONY:
