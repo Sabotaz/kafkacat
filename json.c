@@ -41,6 +41,9 @@ void fmt_msg_output_json (FILE *fp, const rd_kafka_message_t *rkmessage) {
         const char *topic = rd_kafka_topic_name(rkmessage->rkt);
         const unsigned char *buf;
         size_t len;
+        // for b64 conversion
+        char *b64;
+        int l;
 
         g = yajl_gen_alloc(NULL);
 
@@ -112,10 +115,10 @@ void fmt_msg_output_json (FILE *fp, const rd_kafka_message_t *rkmessage) {
         JS_STR(g, "payload");
         if (rkmessage->payload) {
                 l = Base64encode_len(rkmessage->len);
-                b64 = malloc(l * sizeof(unsigned char));
-                l = Base64encode(b64, (const unsigned char *)rkmessage->payload, rkmessage->len);
+                b64 = malloc(l * sizeof(char));
+                l = Base64encode(b64, (const char *)rkmessage->payload, rkmessage->len);
 
-                yajl_gen_string(g, b64, l);
+                yajl_gen_string(g, (const unsigned char *)b64, l);
                 free(b64);
         }
         else
@@ -141,9 +144,8 @@ void fmt_msg_output_json (FILE *fp, const rd_kafka_message_t *rkmessage) {
 void metadata_print_json (const struct rd_kafka_metadata *metadata,
                           int32_t controllerid) {
         yajl_gen g;
-        int i, j, k, l;
+        int i, j, k;
         const unsigned char *buf;
-        const unsigned char *b64;
         size_t len;
 
         g = yajl_gen_alloc(NULL);
